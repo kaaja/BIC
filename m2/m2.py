@@ -57,29 +57,24 @@ class NN:
             numberOfInputVectors = np.shape(self.inputMatrix)[0] -1
         else:
             numberOfInputVectors = np.shape(self.inputMatrix)[0]
-
-        #self.error2 = 5
-        #iteration = 1
        
         for xIndex in range(numberOfInputVectors):
             self.x = self.inputMatrixWithBias[xIndex, :]
             self.targetVector = self.targetMatrix[xIndex, :]
-            #while abs(self.error2) > 1e-5 and iteration < 10000:
-            #iteration+=1
             self.forward()
             self.calculateError()
             self.backward()
-            
-        #print('iteration', iteration,'self.zOutput', self.zOutput)
-            
+                        
     
     def forward(self):
         for j in range(1, self.numberOfHiddenNodes+1):
+            self.hHidden[j] = 0
             for i in range(len(self.x)):
                 self.hHidden[j] += self.wHidden[i,j-1]*self.x[i]
             self.zHidden[j] = self.activationFunction(self.hHidden[j])
             
         for k in range(len(self.hOutput)):
+            self.hOutput[k] = 0
             for j in range(len(self.hHidden)):
                 self.hOutput[k] += self.wOutput[j,k]*self.zHidden[j]
             self.zOutput[k] = self.activationFunction(self.hOutput[k])
@@ -279,7 +274,6 @@ def test_convergence():
     tstRun3 = NN(inputMatrix, targetMatrix, test=True )
     tstRun3.x = tstRun3.inputMatrixWithBias[0, :]
     tstRun3.targetVector = tstRun3.targetMatrix[0, :]
-    print('tstRun3.x', tstRun3.x, 'tstRun3.targetVector', tstRun3.targetVector)
 
     tolerance = 1e-4
     tstRun3.error2 = 5
@@ -287,12 +281,10 @@ def test_convergence():
     
     while abs(tstRun3.error2) > tolerance and iteration < tstRun3.maxIterations:
         tstRun3.forward()
-        print('tstRun3.zOutput',tstRun3.zOutput)
         tstRun3.calculateError()
         tstRun3.backward()
         iteration += 1
     success = abs(tstRun3.error2) < tolerance
-    print('success ', success )
     msg = 'Convergence: abs(error) = %.2E, tolerance = %.2E' %(abs(tstRun3.error2), tolerance),\
     'Iterations: ', iteration, 'Output: ', tstRun3.zOutput
     assert success, msg
@@ -302,11 +294,11 @@ def test_convergence():
 
 
 if __name__ == "__main__":
-    #test_run()
-    #test_init()   
-    #test_forward()
-    #test_backward()
-    #test_convergence()
+    test_run()
+    test_init()   
+    test_forward()
+    test_backward()
+    test_convergence()
 
     
     
