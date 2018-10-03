@@ -95,8 +95,12 @@ class NN:
                 
         for j in range(np.shape(self.wOutput)[0]):
             for k in range(np.shape(self.wOutput)[1]):
-                self.wOutput[j,k] -= self.learningRate*self.deltaOutput[k]/
-                *self.zOutput[j]
+                self.wOutput[j,k] -= self.learningRate*self.deltaOutput[k]\
+                *self.zHidden[j]
+        for i in range(np.shape(self.wHidden)[0]):
+            for j in range(np.shape(self.wHidden)[1]):
+                self.wHidden[i,j] -= self.learningRate*self.deltaHidden[j+1]\
+                *self.x[i]
             
         
     
@@ -223,25 +227,43 @@ def test_backward():
     inputMatrix = np.array(((0,1), (0,1)))
     targetMatrix = np.array(((1,0), (1,0)))
     
-    tstRun = NN(inputMatrix, targetMatrix, test=True )
-    tstRun.run()
+    tstRun2 = NN(inputMatrix, targetMatrix, test=True )
+    tstRun2.run()
 
     # deltaOutput
     correct = np.array((1, 2))
     tolerance = 1e-7
-    error = np.linalg.norm(correct - tstRun.deltaOutput)
+    error = np.linalg.norm(correct - tstRun2.deltaOutput)
     success = abs(error) < tolerance
     msg = 'deltaOutput : abs(error) = %.2E, tolerance = %.2E' %(abs(error), tolerance),\
-    'deltaOutput: ', tstRun.deltaOutput
+    'deltaOutput: ', tstRun2.deltaOutput
     assert success, msg
     
     # deltaHidden
     correct = np.array((-1, 2))
     tolerance = 1e-7
-    error = np.linalg.norm(correct - tstRun.deltaHidden[1:]) 
+    error = np.linalg.norm(correct - tstRun2.deltaHidden[1:]) 
     success = abs(error) < tolerance
     msg = 'deltaHidden: abs(error) = %.2E, tolerance = %.2E' %(abs(error), tolerance),\
-    'deltaHidden: ', tstRun.deltaHidden
+    'deltaHidden: ', tstRun2.deltaHidden
+    assert success, msg
+    
+    # wOutput
+    correct = np.array(((0.9, -1.2), (-0.2, 0.6)))
+    tolerance = 1e-7
+    error = np.linalg.norm(correct - tstRun2.wOutput[1:,:]) 
+    success = abs(error) < tolerance
+    msg = 'wOutput: abs(error) = %.2E, tolerance = %.2E' %(abs(error), tolerance),\
+    'wOutput: ', tstRun2.wOutput[1:,:]
+    assert success, msg
+    
+    # wHidden
+    correct = np.array(((-1., 0.), (0.1, 0.8)))
+    tolerance = 1e-7
+    error = np.linalg.norm(correct - tstRun2.wHidden[1:,:])
+    success = abs(error) < tolerance
+    msg = 'wHidden: abs(error) = %.2E, tolerance = %.2E' %(abs(error), tolerance),\
+    'wHidden: ', tstRun2.wHidden[1:,:]
     assert success, msg
 
 
