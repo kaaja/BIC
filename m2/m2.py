@@ -20,10 +20,10 @@ class NN:
         self.inputMatrixWithBias = np.c_[np.ones(np.shape(inputMatrix)[0]), \
                                     inputMatrix]         
         
-        self.wHidden = np.zeros((np.shape(self.inputMatrixWithBias)[0]+1, \
-                                            numberOfHiddenNodes))
-        self.wOutput = np.zeros((numberOfHiddenNodes+1, \
-                                            np.shape(targetMatrix)[1]))
+        #self.wHidden = np.zeros((np.shape(self.inputMatrixWithBias)[1], \
+        #                                    numberOfHiddenNodes)) 
+        #self.wOutput = np.zeros((numberOfHiddenNodes+1, \
+        #                                    np.shape(targetMatrix)[1]))
         
         self.hHidden = np.zeros(numberOfHiddenNodes+1)
         self.hHidden[0] = 1
@@ -40,6 +40,12 @@ class NN:
         if test:
             self.wHidden = np.array(((1., 1), (-1., 0), (0, 1)))
             self.wOutput  = np.array(((1., 1.), (1., -1.), (0., 1.))) 
+         
+        else:
+            self.wHidden = np.random.random_sample((np.shape(self.inputMatrixWithBias)[1],\
+                                            self.numberOfHiddenNodes)) - .5
+            self.wOutput = np.random.random_sample((self.numberOfHiddenNodes+1,\
+                                            np.shape(self.targetMatrix)[1])) - .5
             
         if activationFunction == 'linear':
             self.activationFunction = self.activationFunctionLinear
@@ -67,6 +73,7 @@ class NN:
                         
     
     def forward(self):
+
         for j in range(1, self.numberOfHiddenNodes+1):
             self.hHidden[j] = 0
             for i in range(len(self.x)):
@@ -136,7 +143,8 @@ def test_init():
     # Weight matrix hidden layer
     correctDimensions = np.array((3,2))
     error = np.linalg.norm(np.shape(tstRun.wHidden) - correctDimensions)
-    success = abs(error) < tolerance
+    error2 = np.linalg.norm(np.zeros((3,2)) - tstRun.wHidden) # Not zeros only
+    success = abs(error) < tolerance and error2 > 0
     msg = 'WeightMatrix hidden abs(error) = %.2E, tolerance = %.2E' \
     %(abs(error), tolerance)
     assert success, msg
@@ -144,7 +152,8 @@ def test_init():
     # weightMatrixOutput
     correctDimensions = np.array((3,2))
     error = np.linalg.norm(np.shape(tstRun.wOutput) - correctDimensions)
-    success = abs(error) < tolerance
+    error2 = np.linalg.norm(np.zeros((3,2)) - tstRun.wOutput) # Not zeros only
+    success = abs(error) < tolerance and error2 > 0
     msg = 'wOutput abs(error) = %.2E, tolerance = %.2E' \
     %(abs(error), tolerance)
     assert success, msg
@@ -165,6 +174,8 @@ def test_init():
     msg = 'hOutput abs(error) = %.2E, tolerance = %.2E' \
     %(abs(error), tolerance)
     assert success, msg
+    
+    
     
 def test_forward():
     inputMatrix = np.array(((0,1), (0,1)))
@@ -290,6 +301,8 @@ def test_convergence():
     assert success, msg
     
 
+    
+
 
 
 
@@ -299,6 +312,6 @@ if __name__ == "__main__":
     test_forward()
     test_backward()
     test_convergence()
-
+    
     
     
