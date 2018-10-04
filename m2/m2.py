@@ -64,22 +64,24 @@ class NN:
     def derivativeLinear(self, x):
         return 1
     
-    def solAlg1(self, trainingCyclesPerValidation):
+    def solAlg1(self, trainingCyclesPerValidation=100):
         """
         Fixed validation set.
         Weight change for every input.
         Random order of inputs"""
         
-        validationErrors = []
+        self.validationErrors = []
         valErrorNew = 5e10
         valErrorOld = valErrorNew + 1.
         while valErrorNew < valErrorOld:
             for trainingCycle in range(trainingCyclesPerValidation):
-                print('trainingCycle ', trainingCycle )
+                #print('trainingCycle ', trainingCycle )
                 indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
                 np.random.shuffle(indices)
+                
                 self.inputMatrixTrainWithBias = \
                 self.inputMatrixTrainWithBias[indices,:]
+                
                 self.targetMatrixTrain= \
                 self.targetMatrixTrain[indices,:]
                 
@@ -88,20 +90,23 @@ class NN:
                     self.targetVector = self.targetMatrixTrain[idx, :]
                     self.forward()
                     self.backward()   
-                self.calculateValidationError()
-                valErrorOld = valErrorNew
-                valErrorNew = self.valError
-                validationErrors.append(valErrorNew)
+            self.calculateValidationError()
+            valErrorOld = valErrorNew
+            valErrorNew = self.valError
+            self.validationErrors.append(valErrorNew)
+            #print(valErrorNew)
+        #print(self.validationErrors)
+            
                 
     def calculateValidationError(self):
         self.valError = 0
-        for idx in np.range(np.shape(self.inputMatrixValid)[0]):
+        for idx in range(np.shape(self.inputMatrixValid)[0]):
             self.x = self.inputMatrixValid[idx, :]
             self.targetVector = self.targetMatrixValid[idx, :]
-            forward()
+            self.forward()
             for outputComponent in range(len(self.targetVector)):
                 self.valError += (self.zOutput[outputComponent] - \
-                             self.targetVector[outputComponent])
+                             self.targetVector[outputComponent])**2
                 
 
     def run(self):
@@ -121,7 +126,6 @@ class NN:
     
     
     def forward(self):
-
         for j in range(1, self.numberOfHiddenNodes+1):
             self.hHidden[j] = 0
             for i in range(len(self.x)):
@@ -351,17 +355,33 @@ def test_convergence():
 def test_solAlg1():
     inputMatrixTrain = np.array(((0,1), (1,0)))
     targetMatrixTrain = np.array(((1,0), (0,1)))
+    inputMatrixValid = np.array(((1,1), (0, 0)))
+    targetMatrixValid = np.array(((0, 0), (1,1))) 
     
-    tstRun3 = NN(inputMatrixTrain, targetMatrixTrain, test=True )
-    tstRun3.x = tstRun3.inputMatrixTrainWithBias[0, :]
-    tstRun3.targetVector = tstRun3.targetMatrixTrain[0, :]
-    tstRun3.solAlg1(3)
-    '''
-    success = abs(tstRun3.error2) < tolerance
-    msg = 'Convergence: abs(error) = %.2E, tolerance = %.2E' %(abs(tstRun3.error2), tolerance),\
-    'Iterations: ', iteration, 'Output: ', tstRun3.zOutput
+    tstRun3 = NN(inputMatrixTrain, targetMatrixTrain, 
+                 inputMatrixValid , targetMatrixValid , test=True )
+    tstRun3.solAlg1()
+    
+    # Early stopping
+    validationErrorsArray = np.array(tstRun3.validationErrors)
+    validationDirection = np.zeros(len(validationErrorsArray)-1)
+    for i in range(len(validationDirection)):
+        validationDirection[i] = validationErrorsArray[i+1]\
+        -validationErrorsArray[i]
+    wrong1 = 0
+    wrong2 = 0
+    for i in range(len(validationDirection)):
+        if i < len(validationDirection) -1 and validationDirection[i] > 0:
+            #print('validationDirection[i]',validationDirection[i])
+            wrong1 = 1
+    if validationDirection[-1] < 0:
+            wrong2 = 1
+    success = (wrong1+ wrong2) == 0
+    #success = abs(tstRun3.error2) < tolerance
+    msg = 'Early stopping array change validation error: ',  validationDirection, \
+    'Wrong1, wrong 2', wrong1, wrong2
     assert success, msg
-    '''
+
 
 
 
