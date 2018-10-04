@@ -105,14 +105,22 @@ class NN:
             self.x = self.inputMatrixValid[idx, :]
             self.targetVector = self.targetMatrixValid[idx, :]
             self.forward()
+            self.hardMax(self.zOutput)
             for outputComponent in range(len(self.targetVector)):
-                self.valError += (self.zOutput[outputComponent] - \
+                print('self.hardMaxValue', self.hardMaxValue)
+                print('self.zOutput',self.zOutput)
+                self.valError += (self.hardMaxValue[outputComponent] - \
                              self.targetVector[outputComponent])**2
                                   
     def predict(self, x):
         self.x = x
         self.forward()
-        print('Predict: ', self.zOutput)
+        #print('Predict: ', self.zOutput)
+        
+    def hardMax(self, x):
+        self.hardMaxValue = np.copy(x)
+        self.hardMaxValue[np.argmax(self.hardMaxValue)] = 1
+        self.hardMaxValue = np.round(self.hardMaxValue)
 
     def run(self):
         if self.test:
@@ -399,4 +407,4 @@ if __name__ == "__main__":
     test_convergence()
     test_solAlg1()
     
-    
+#%%

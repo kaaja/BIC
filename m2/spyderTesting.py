@@ -82,6 +82,8 @@ trainingCyclesPerValidation = 3
 tstRun3.solAlg1( trainingCyclesPerValidation=trainingCyclesPerValidation)
 print('tstRun3.validationErrors', tstRun3.validationErrors)
 tstRun3.predict(train[40,:])
+print('predict: ', tstRun3.zOutput)
+
 print('target: ', train_targets[40,:])
 
 
