@@ -88,7 +88,20 @@ class NN:
                     self.targetVector = self.targetMatrixTrain[idx, :]
                     self.forward()
                     self.backward()   
-                valErrorNew = valErrorOld+2
+                self.calculateValidationError()
+                valErrorOld = valErrorNew
+                valErrorNew = self.valError
+                validationErrors.append(valErrorNew)
+                
+    def calculateValidationError(self):
+        self.valError = 0
+        for idx in np.range(np.shape(self.inputMatrixValid)[0]):
+            self.x = self.inputMatrixValid[idx, :]
+            self.targetVector = self.targetMatrixValid[idx, :]
+            forward()
+            for outputComponent in range(len(self.targetVector)):
+                self.valError += (self.zOutput[outputComponent] - \
+                             self.targetVector[outputComponent])
                 
 
     def run(self):
