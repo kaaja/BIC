@@ -1,6 +1,6 @@
-
-
 #%%
+
+
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -8,26 +8,32 @@ class NN:
     """1 hidden layer neutral network. 
     Multidimensional input and output"""
     
-    def __init__(self, inputMatrix, targetMatrix, learningRate=.1,\
+    def __init__(self, inputMatrixTrain, targetMatrixTrain, 
+                 inputMatrixValid=False, targetMatrixValid=False, \
+                 inputMatrixTest=False, targetMatrixTest=False, learningRate=.1,\
                  numberOfHiddenNodes=2, maxIterations=1000, method='sequential', \
                  test=False, activationFunction='linear'):
         
-        self.inputMatrix, self.targetMatrix, self.learningRate, self.numberOfHiddenNodes,\
-                self.maxIterations, self.method, self.test = \
-        inputMatrix, targetMatrix, learningRate, numberOfHiddenNodes, \
-                 maxIterations, method, test
+        self.inputMatrixTrain = inputMatrixTrain
+        self.targetMatrixTrain = targetMatrixTrain
+        self.inputMatrixValid = inputMatrixValid
+        self.targetMatrixValid = targetMatrixValid
+        self.inputMatrixTest = inputMatrixTest
+        self.targetMatrixTest = targetMatrixTest
+        self.learningRate = learningRate
+        self.numberOfHiddenNodes =  numberOfHiddenNodes
+        self.maxIterations = maxIterations
+        self.method = method
+        self.test = test\
+         
         
-        self.inputMatrixWithBias = np.c_[np.ones(np.shape(inputMatrix)[0]), \
-                                    inputMatrix]         
+        self.inputMatrixTrainWithBias = np.c_[np.ones(np.shape(inputMatrixTrain)[0]), \
+                                    inputMatrixTrain]         
         
-        #self.wHidden = np.zeros((np.shape(self.inputMatrixWithBias)[1], \
-        #                                    numberOfHiddenNodes)) 
-        #self.wOutput = np.zeros((numberOfHiddenNodes+1, \
-        #                                    np.shape(targetMatrix)[1]))
         
         self.hHidden = np.zeros(numberOfHiddenNodes+1)
         self.hHidden[0] = 1
-        self.hOutput = np.zeros(np.shape(targetMatrix)[1])
+        self.hOutput = np.zeros(np.shape(targetMatrixTrain)[1])
         
         self.zHidden = np.zeros_like(self.hHidden)
         self.zHidden[0] = 1
@@ -42,10 +48,10 @@ class NN:
             self.wOutput  = np.array(((1., 1.), (1., -1.), (0., 1.))) 
          
         else:
-            self.wHidden = np.random.random_sample((np.shape(self.inputMatrixWithBias)[1],\
+            self.wHidden = np.random.random_sample((np.shape(self.inputMatrixTrainWithBias)[1],\
                                             self.numberOfHiddenNodes)) - .5
             self.wOutput = np.random.random_sample((self.numberOfHiddenNodes+1,\
-                                            np.shape(self.targetMatrix)[1])) - .5
+                                            np.shape(self.targetMatrixTrain)[1])) - .5
             
         if activationFunction == 'linear':
             self.activationFunction = self.activationFunctionLinear
@@ -57,20 +63,49 @@ class NN:
     
     def derivativeLinear(self, x):
         return 1
+    
+    def solAlg1(self, trainingCyclesPerValidation):
+        """
+        Fixed validation set.
+        Weight change for every input.
+        Random order of inputs"""
+        
+        validationErrors = []
+        valErrorNew = 5e10
+        valErrorOld = valErrorNew + 1.
+        while valErrorNew < valErrorOld:
+            for trainingCycle in range(trainingCyclesPerValidation):
+                print('trainingCycle ', trainingCycle )
+                indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
+                np.random.shuffle(indices)
+                self.inputMatrixTrainWithBias = \
+                self.inputMatrixTrainWithBias[indices,:]
+                self.targetMatrixTrain= \
+                self.targetMatrixTrain[indices,:]
+                
+                for idx in range(np.shape(self.targetMatrixTrain)[0]):
+                    self.x = self.inputMatrixTrainWithBias[idx, :]
+                    self.targetVector = self.targetMatrixTrain[idx, :]
+                    self.forward()
+                    self.backward()   
+                valErrorNew = valErrorOld+2
+                
 
     def run(self):
         if self.test:
-            numberOfInputVectors = np.shape(self.inputMatrix)[0] -1
+            numberOfInputVectors = np.shape(self.inputMatrixTrain)[0] -1
         else:
-            numberOfInputVectors = np.shape(self.inputMatrix)[0]
+            numberOfInputVectors = np.shape(self.inputMatrixTrain)[0]
        
         for xIndex in range(numberOfInputVectors):
-            self.x = self.inputMatrixWithBias[xIndex, :]
-            self.targetVector = self.targetMatrix[xIndex, :]
+            self.x = self.inputMatrixTrainWithBias[xIndex, :]
+            self.targetVector = self.targetMatrixTrain[xIndex, :]
             self.forward()
             self.calculateError()
             self.backward()
                         
+    
+    
     
     def forward(self):
 
@@ -114,10 +149,10 @@ class NN:
     
          
 def test_run():
-    inputMatrix = np.array(((0,1), (0,1)))
-    targetMatrix = np.array(((1,0), (1,0)))
+    inputMatrixTrain = np.array(((0,1), (0,1)))
+    targetMatrixTrain = np.array(((1,0), (1,0)))
     correct = np.array(((1,0,1), (1,0,1)))
-    tstRun = NN(inputMatrix, targetMatrix )
+    tstRun = NN(inputMatrixTrain, targetMatrixTrain )
     tstRun.run()
     
     tolerance = 1e-7
@@ -127,14 +162,14 @@ def test_run():
     assert success, msg
     
 def test_init():
-    inputMatrix = np.array(((0,1), (0,1)))
-    targetMatrix = np.array(((1,0), (1,0)))
-    tstRun = NN(inputMatrix, targetMatrix )
+    inputMatrixTrain = np.array(((0,1), (0,1)))
+    targetMatrixTrain = np.array(((1,0), (1,0)))
+    tstRun = NN(inputMatrixTrain, targetMatrixTrain )
 
     # Input with bias
     correctMatrix = np.array(((1,0,1), (1,0,1)))
     tolerance = 1e-7
-    error = np.linalg.norm(tstRun.inputMatrixWithBias - correctMatrix)
+    error = np.linalg.norm(tstRun.inputMatrixTrainWithBias - correctMatrix)
     success = abs(error) < tolerance
     msg = 'Input with bias matrix: abs(error) = %.2E, tolerance = %.2E' \
     %(abs(error), tolerance)
@@ -178,10 +213,10 @@ def test_init():
     
     
 def test_forward():
-    inputMatrix = np.array(((0,1), (0,1)))
-    targetMatrix = np.array(((1,0), (1,0)))
+    inputMatrixTrain = np.array(((0,1), (0,1)))
+    targetMatrixTrain = np.array(((1,0), (1,0)))
     
-    tstRun = NN(inputMatrix, targetMatrix, test=True )
+    tstRun = NN(inputMatrixTrain, targetMatrixTrain, test=True )
     tstRun.run()
     
     # hHidden
@@ -221,10 +256,10 @@ def test_forward():
     assert success, msg
 
 def test_calculateError():
-    inputMatrix = np.array(((0,1), (0,1)))
-    targetMatrix = np.array(((1,0), (1,0)))
+    inputMatrixTrain = np.array(((0,1), (0,1)))
+    targetMatrixTrain = np.array(((1,0), (1,0)))
     
-    tstRun = NN(inputMatrix, targetMatrix, test=True )
+    tstRun = NN(inputMatrixTrain, targetMatrixTrain, test=True )
     tstRun.run()
 
     correct = (1.-2)**2 + (0.-2.)**2
@@ -236,10 +271,10 @@ def test_calculateError():
     assert success, msg
     
 def test_backward():
-    inputMatrix = np.array(((0,1), (0,1)))
-    targetMatrix = np.array(((1,0), (1,0)))
+    inputMatrixTrain = np.array(((0,1), (0,1)))
+    targetMatrixTrain = np.array(((1,0), (1,0)))
     
-    tstRun2 = NN(inputMatrix, targetMatrix, test=True )
+    tstRun2 = NN(inputMatrixTrain, targetMatrixTrain, test=True )
     tstRun2.run()
 
     # deltaOutput
@@ -279,12 +314,12 @@ def test_backward():
     assert success, msg
     
 def test_convergence():
-    inputMatrix = np.array(((0,1), (0,1)))
-    targetMatrix = np.array(((1,0), (1,0)))
+    inputMatrixTrain = np.array(((0,1), (0,1)))
+    targetMatrixTrain = np.array(((1,0), (1,0)))
     
-    tstRun3 = NN(inputMatrix, targetMatrix, test=True )
-    tstRun3.x = tstRun3.inputMatrixWithBias[0, :]
-    tstRun3.targetVector = tstRun3.targetMatrix[0, :]
+    tstRun3 = NN(inputMatrixTrain, targetMatrixTrain, test=True )
+    tstRun3.x = tstRun3.inputMatrixTrainWithBias[0, :]
+    tstRun3.targetVector = tstRun3.targetMatrixTrain[0, :]
 
     tolerance = 1e-4
     tstRun3.error2 = 5
@@ -300,8 +335,20 @@ def test_convergence():
     'Iterations: ', iteration, 'Output: ', tstRun3.zOutput
     assert success, msg
     
-
+def test_solAlg1():
+    inputMatrixTrain = np.array(((0,1), (1,0)))
+    targetMatrixTrain = np.array(((1,0), (0,1)))
     
+    tstRun3 = NN(inputMatrixTrain, targetMatrixTrain, test=True )
+    tstRun3.x = tstRun3.inputMatrixTrainWithBias[0, :]
+    tstRun3.targetVector = tstRun3.targetMatrixTrain[0, :]
+    tstRun3.solAlg1(3)
+    '''
+    success = abs(tstRun3.error2) < tolerance
+    msg = 'Convergence: abs(error) = %.2E, tolerance = %.2E' %(abs(tstRun3.error2), tolerance),\
+    'Iterations: ', iteration, 'Output: ', tstRun3.zOutput
+    assert success, msg
+    '''
 
 
 
@@ -312,6 +359,6 @@ if __name__ == "__main__":
     test_forward()
     test_backward()
     test_convergence()
-    
+    test_solAlg1()
     
     
