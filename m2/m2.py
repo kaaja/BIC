@@ -77,6 +77,7 @@ class NN:
             for trainingCycle in range(trainingCyclesPerValidation):
                 #print('trainingCycle ', trainingCycle )
                 indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
+                #print('len(indices)',len(indices))
                 np.random.shuffle(indices)
                 
                 self.inputMatrixTrainWithBias = \
@@ -107,7 +108,11 @@ class NN:
             for outputComponent in range(len(self.targetVector)):
                 self.valError += (self.zOutput[outputComponent] - \
                              self.targetVector[outputComponent])**2
-                
+                                  
+    def predict(self, x):
+        self.x = x
+        self.forward()
+        print('Predict: ', self.zOutput)
 
     def run(self):
         if self.test:

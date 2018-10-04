@@ -71,15 +71,18 @@ test = movements[3::4,0:40]
 test_targets = target[3::4] #me every 4th row, start row3
 
 # My own network
+
 import m2
 from m2 import *
 numberOfHiddenNodes=12
 tstRun3 = NN(test, test_targets, 
                  valid , valid , numberOfHiddenNodes=numberOfHiddenNodes, test=False )
-trainingCyclesPerValidation = 2
+trainingCyclesPerValidation = 3
 
 tstRun3.solAlg1( trainingCyclesPerValidation=trainingCyclesPerValidation)
 print('tstRun3.validationErrors', tstRun3.validationErrors)
+tstRun3.predict(train[40,:])
+print('target: ', train_targets[40,:])
 
 
 '''
