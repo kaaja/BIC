@@ -76,6 +76,8 @@ test_targets = target[3::4] #me every 4th row, start row3
 
 import m2
 from m2 import *
+
+'''
 numberOfHiddenNodes=9
 activationFunction= 'sigmoid'#'linear'
 tstRun3 = NN(inputMatrixTrain = train, 
@@ -98,7 +100,20 @@ tstRun3.predict(test[40,:])
 #print('predict: ', tstRun3.zOutput)
 print('predict: ', tstRun3.outputPredicted)
 print('target: ', test_targets[40,:])
+'''
 
+# K-fold
+numberOfHiddenNodes=9
+activationFunction= 'sigmoid'#'linear'
+tstRun4 = NN(inputMatrixTrain = train, 
+             targetMatrixTrain = train_targets, 
+             inputMatrixValid = valid, 
+             targetMatrixValid = valid_targets, 
+             numberOfHiddenNodes = numberOfHiddenNodes, 
+             test = False, 
+             activationFunction = activationFunction)
+numberOfFolds = 3
+tstRun4.kFold(numberOfFolds = numberOfFolds)
 
 '''
 # Try networks with different number of hidden nodes:

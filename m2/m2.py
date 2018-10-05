@@ -90,23 +90,59 @@ class NN:
 
         allData = np.concatenate([self.inputMatrixTrain, self.inputMatrixValid],\
                                  axis=1)
+        allTargets = np.concatenate([self.targetMatrixTrain, self.targetMatrixValid],\
+                                 axis=1)
+        
+        print('allData\n', allData)
+        #print('allTargets\n', allTargets)
         foldLength = int(round(np.shape(allData)[0]/numberOfFolds))
          
         indices = np.arange(np.shape(allData)[0])
-        print('indices', indices)
+        
+        minimumValErrors = []
         for iteration in range(numberOfFolds):
             if iteration != range(numberOfFolds)[-1]:
-                testIndices = indices[iteration*foldLength:(iteration+1)*foldLength]
+                validationIndices = indices[iteration*foldLength:(iteration+1)*foldLength]
             else:
-                testIndices = indices[foldLength*iteration:]
+                validationIndices = indices[foldLength*iteration:]
                 
-            trainintIndices = np.setdiff1d(np.union1d(indices, testIndices ),\
-                                           np.intersect1d(indices, testIndices))
-            print('testIndices',testIndices)
-            print('tr)ainIndcies', trainintIndices)
+            trainintIndices = np.setdiff1d(np.union1d(indices, validationIndices ),\
+                                           np.intersect1d(indices, validationIndices))
+            #print('testIndices',testIndices)
+            #print('tr)ainIndcies', trainintIndices)
+            
+            self.inputMatrixTrain = allData[trainintIndices,:]
+            print('self.inputMatrixTrain \n',self.inputMatrixTrain)
+            
+            self.inputMatrixTrainWithBias = np.c_[np.ones(np.shape(self.inputMatrixTrain)[0]), \
+                                    self.inputMatrixTrain]
+            print('self.inputMatrixTrainWithBias \n',self.inputMatrixTrainWithBias)
+            
+            self.inputMatrixValid = allData[validationIndices, :]
+            #print('self.inputMatrixValid \n',self.inputMatrixValid)
+            self.targetMatrixTrain = allTargets[trainintIndices, :]
+            #print('self.targetMatrixTrain \n',self.targetMatrixTrain)
+              
             
             
+            self.targetMatrixValid = allTargets[validationIndices, :]
+            print('self.targetMatrixValid \n',self.targetMatrixValid)
 
+
+            trainingCyclesPerValidation = 5
+            maxValidations = 1000
+            maxLocalOptima = 15
+
+
+            self.solAlg1(
+                    trainingCyclesPerValidation = trainingCyclesPerValidation,
+                    maxValidations = maxValidations,
+                    maxLocalOptima = maxLocalOptima)
+            
+            minimumValErrors.append(np.min(self.validationErrors))
+        print('minimumValErrors', minimumValErrors)
+        print('np.mean(minimumValErrors), np.std(minimumValErrors)', 
+              np.mean(minimumValErrors), np.std(minimumValErrors))
     
     def solAlg1(self, 
                 trainingCyclesPerValidation=5, 
@@ -124,6 +160,7 @@ class NN:
         validationIdx = 0
         
         indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
+
         
         while localOptima < maxLocalOptima and validationIdx < maxValidations:
             for trainingCycle in range(trainingCyclesPerValidation):
@@ -515,6 +552,9 @@ def test_kFold():
                  targetMatrixValid =targetMatrixValid, 
                  test=True )
     tstRun3.kFold()
+    
+
+    
 
 
 
@@ -528,5 +568,6 @@ if __name__ == "__main__":
     test_convergence()
     test_solAlg1()
     test_kFold()
+
     
 #%%
