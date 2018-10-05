@@ -74,8 +74,9 @@ class NN:
         return self.sigmoid(x)*(1. - self.sigmoid(x))
     
     def solAlg1(self, 
-                trainingCyclesPerValidation=100, 
-                maxIterationsEarlyStopping= 5000):
+                trainingCyclesPerValidation=5, 
+                maxValidations= 1000,
+                maxLocalOptima = 15):
         """
         Fixed validation set.
         Weight change for every input.
@@ -84,8 +85,9 @@ class NN:
         self.validationErrors = []
         valErrorNew = 5e10
         valErrorOld = valErrorNew + 1.
-        localOptimas = 0
-        while valErrorNew < valErrorOld:
+        localOptima = 0
+        validationIdx = 0
+        while localOptima < maxLocalOptima and validationIdx < maxValidations:
             for trainingCycle in range(trainingCyclesPerValidation):
                 #print('trainingCycle ', trainingCycle )
                 indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
@@ -104,9 +106,14 @@ class NN:
                     self.forward()
                     self.backward()   
             self.calculateValidationError()
-            valErrorOld = valErrorNew
-            valErrorNew = self.valError
-            self.validationErrors.append(valErrorNew)
+            if self.valError > valErrorOld:
+                localOptima += 1
+            else:
+                valErrorOld  = self.valError 
+                self.validationErrors.append(valErrorOld)
+            
+            validationIdx += 1
+        self.totalNumberOfIterations = (validationIdx+1)*trainingCyclesPerValidation
             #print(valErrorNew)
         #print(self.validationErrors)
             
@@ -118,6 +125,7 @@ class NN:
         confusionMatrix = np.zeros((len(self.targetVector), \
                                     len(self.targetVector)))
 
+        zeroOnes = 0
         for idx in range(np.shape(self.inputMatrixValid)[0]):
             #self.x = self.inputMatrixValid[idx, :]
             x = self.inputMatrixValid[idx, :]
@@ -131,9 +139,11 @@ class NN:
             self.hardMax(prediction)
             predictionMatrixValid[idx,:] = self.hardMaxValue
             #print('predictionMatrixValid[idx,:]', predictionMatrixValid[idx,:])
-            
-            confusionMatrix[np.argmax(targetVector), \
+            if 1 in self.hardMaxValue:
+                confusionMatrix[np.argmax(targetVector), \
                             np.argmax(self.hardMaxValue)] +=1
+            else:
+                zeroOnes += 1
             
             
             '''
@@ -151,15 +161,11 @@ class NN:
         #print('maxIndexValid', maxIndexValid)
         #print(predictionMatrixValid)
         #print('maxIndexPrediction', maxIndexPrediction)
-        accuracy = np.sum(maxIndexValid == maxIndexPrediction)/len(maxIndexValid)
-        self.valError= 1. - accuracy 
+        self.accuracy = np.sum(maxIndexValid == maxIndexPrediction)/len(maxIndexValid)
         
-        accuracyConfusionMatrix = float(np.trace(confusionMatrix)/np.sum(confusionMatrix))
-        #print('accuracyConfusionMatrix/accuracy', accuracyConfusionMatrix/accuracy)
-        #print('confusionMatrix \n' , confusionMatrix)
-        #print('accuracyConfusionMatrix ', accuracyConfusionMatrix )
-        #print('accuracy',accuracy)
-        #print(self.valError)
+        accuracyConfusionMatrix = float(np.trace(confusionMatrix))/(np.sum(confusionMatrix) + zeroOnes)
+        #self.valError= 1. - self.accuracy 
+        self.valError= 1. - accuracyConfusionMatrix 
         
             
     def predict(self, x):

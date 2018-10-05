@@ -23,6 +23,8 @@ import numpy as np
 #import mlp
 
 filename = 'movements_day1-3.dat'
+filename = 'movements_day1-3Test.dat'
+
 
 movements = np.loadtxt(filename,delimiter='\t')
 
@@ -79,11 +81,14 @@ activationFunction= 'sigmoid'#'linear'
 tstRun3 = NN(test, test_targets, 
                  valid , valid_targets , numberOfHiddenNodes=numberOfHiddenNodes, test=False , \
                  activationFunction = activationFunction)
-trainingCyclesPerValidation = 5
-maxIterationsEarlyStopping = 5000
+trainingCyclesPerValidation = 15
+maxValidations= 300 
 
-tstRun3.solAlg1( trainingCyclesPerValidation=trainingCyclesPerValidation)
+tstRun3.solAlg1( trainingCyclesPerValidation=trainingCyclesPerValidation, \
+                maxValidations=maxValidations)
 print('tstRun3.validationErrors', tstRun3.validationErrors)
+
+print('tstRun3.totalNumberOfIterations ', tstRun3.totalNumberOfIterations )
 tstRun3.predict(train[40,:])
 #print('predict: ', tstRun3.zOutput)
 print('predict: ', tstRun3.outputPredicted)
