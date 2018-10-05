@@ -23,7 +23,7 @@ import numpy as np
 #import mlp
 
 filename = 'movements_day1-3.dat'
-filename = 'movements_day1-3Test.dat'
+#filename = 'movements_day1-3Test.dat'
 
 
 movements = np.loadtxt(filename,delimiter='\t')

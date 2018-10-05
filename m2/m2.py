@@ -13,7 +13,8 @@ class NN:
         z is the output from the activation function
         Biases are included in weight matrices"""
     
-    def __init__(self, inputMatrixTrain, 
+    def __init__(self, 
+                 inputMatrixTrain, 
                  targetMatrixTrain, 
                  inputMatrixValid = False, 
                  targetMatrixValid = False, 
@@ -84,6 +85,28 @@ class NN:
                 
     def derivativeSigmoid(self, x):
         return self.sigmoid(x)*(1. - self.sigmoid(x))
+    
+    def kFold(self, numberOfFolds = 3):
+
+        allData = np.concatenate([self.inputMatrixTrain, self.inputMatrixValid],\
+                                 axis=1)
+        foldLength = int(round(np.shape(allData)[0]/numberOfFolds))
+         
+        indices = np.arange(np.shape(allData)[0])
+        print('indices', indices)
+        for iteration in range(numberOfFolds):
+            if iteration != range(numberOfFolds)[-1]:
+                testIndices = indices[iteration*foldLength:(iteration+1)*foldLength]
+            else:
+                testIndices = indices[foldLength*iteration:]
+                
+            trainintIndices = np.setdiff1d(np.union1d(indices, testIndices ),\
+                                           np.intersect1d(indices, testIndices))
+            print('testIndices',testIndices)
+            print('tr)ainIndcies', trainintIndices)
+            
+            
+
     
     def solAlg1(self, 
                 trainingCyclesPerValidation=5, 
@@ -161,7 +184,7 @@ class NN:
             else:
                 zeroOnes += 1
             
-            
+        confusionMatrix = np.around(confusionMatrix/confusionMatrix.sum(axis=1)[:,None], 2)
         #print('predictionMatrixValid \n', predictionMatrixValid)
         #print('self.targetMatrixValid \n', self.targetMatrixValid)
         maxIndexValid = np.argmax(self.targetMatrixValid, axis=1)
@@ -176,7 +199,7 @@ class NN:
         #self.valError= 1. - self.accuracy 
         self.valError= 1. - accuracyConfusionMatrix 
         self.confusionMatrix = confusionMatrix
-        print('self.accuracy', self.accuracy)
+        #print('self.accuracy', self.accuracy)
             
     def predict(self, x):
         #self.x = x
@@ -479,6 +502,19 @@ def test_solAlg1():
     msg = 'Early stopping array change validation error: ',  validationDirection, \
     'Wrong1, wrong 2', wrong1, wrong2
     assert success, msg
+    
+def test_kFold():
+    inputMatrixTrain = np.array(((0,1, 2, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4)))
+    targetMatrixTrain = np.array(((1,0, 22, 3, 4), (0,1, 4, 4, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4)))
+    inputMatrixValid = np.array(((1,1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)))
+    targetMatrixValid = np.array(((0, 0), (1,1), (0, 0), (0, 0), (0, 0), (0, 0)))
+    
+    tstRun3 = NN(inputMatrixTrain=inputMatrixTrain, 
+                 targetMatrixTrain=targetMatrixTrain, 
+                 inputMatrixValid =inputMatrixValid , 
+                 targetMatrixValid =targetMatrixValid, 
+                 test=True )
+    tstRun3.kFold()
 
 
 
@@ -491,5 +527,6 @@ if __name__ == "__main__":
     test_backward()
     test_convergence()
     test_solAlg1()
+    test_kFold()
     
 #%%
