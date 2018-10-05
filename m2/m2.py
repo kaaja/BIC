@@ -6,13 +6,25 @@ import matplotlib.pyplot as plt
 
 class NN:
     """1 hidden layer neutral network. 
-    Multidimensional input and output"""
+    Multidimensional input and output
     
-    def __init__(self, inputMatrixTrain, targetMatrixTrain, 
-                 inputMatrixValid=False, targetMatrixValid=False, \
-                 inputMatrixTest=False, targetMatrixTest=False, learningRate=.1,\
-                 numberOfHiddenNodes=2, maxIterations=1000, method='sequential', \
-                 test=False, activationFunction='linear'):
+    Notation: 
+        h is input into activation function.
+        z is the output from the activation function
+        Biases are included in weight matrices"""
+    
+    def __init__(self, inputMatrixTrain, 
+                 targetMatrixTrain, 
+                 inputMatrixValid = False, 
+                 targetMatrixValid = False, 
+                 inputMatrixTest = False, 
+                 targetMatrixTest = False, 
+                 learningRate = .1,
+                 numberOfHiddenNodes = 2, 
+                 maxIterations = 1000, 
+                 method = 'sequential', 
+                 test = False, 
+                 activationFunction = 'linear'):
         
         self.inputMatrixTrain = inputMatrixTrain
         self.targetMatrixTrain = targetMatrixTrain
@@ -87,22 +99,23 @@ class NN:
         valErrorOld = valErrorNew + 1.
         localOptima = 0
         validationIdx = 0
+        
+        indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
+        
         while localOptima < maxLocalOptima and validationIdx < maxValidations:
             for trainingCycle in range(trainingCyclesPerValidation):
-                #print('trainingCycle ', trainingCycle )
-                indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
-                #print('len(indices)',len(indices))
+            
                 np.random.shuffle(indices)
                 
-                self.inputMatrixTrainWithBias = \
+                self.inputMatrixTrainWithBiasUse = \
                 self.inputMatrixTrainWithBias[indices,:]
                 
-                self.targetMatrixTrain= \
+                self.targetMatrixTrainUse= \
                 self.targetMatrixTrain[indices,:]
                 
                 for idx in range(np.shape(self.targetMatrixTrain)[0]):
-                    self.x = self.inputMatrixTrainWithBias[idx, :]
-                    self.targetVector = self.targetMatrixTrain[idx, :]
+                    self.x = self.inputMatrixTrainWithBiasUse[idx, :]
+                    self.targetVector = self.targetMatrixTrainUse[idx, :]
                     self.forward()
                     self.backward()   
             self.calculateValidationError()
@@ -111,9 +124,11 @@ class NN:
             else:
                 valErrorOld  = self.valError 
                 self.validationErrors.append(valErrorOld)
+                bestConfusionMatrix = self.confusionMatrix
             
             validationIdx += 1
         self.totalNumberOfIterations = (validationIdx+1)*trainingCyclesPerValidation
+        print('bestConfusionMatrix \n', bestConfusionMatrix)
             #print(valErrorNew)
         #print(self.validationErrors)
             
@@ -138,6 +153,7 @@ class NN:
             #self.hardMax(self.zOutput)
             self.hardMax(prediction)
             predictionMatrixValid[idx,:] = self.hardMaxValue
+            
             #print('predictionMatrixValid[idx,:]', predictionMatrixValid[idx,:])
             if 1 in self.hardMaxValue:
                 confusionMatrix[np.argmax(targetVector), \
@@ -146,15 +162,8 @@ class NN:
                 zeroOnes += 1
             
             
-            '''
-            #for outputComponent in range(len(self.targetVector)):
-            for outputComponent in range(len(targetVector)):
-                #print('self.zOutput',self.zOutput)
-                #self.valError += (self.hardMaxValue[outputComponent] - \
-                 #            self.targetVector[outputComponent])**2
-                self.valError += (self.hardMaxValue[outputComponent] - \
-                             targetVector[outputComponent])**2
-            '''
+        #print('predictionMatrixValid \n', predictionMatrixValid)
+        #print('self.targetMatrixValid \n', self.targetMatrixValid)
         maxIndexValid = np.argmax(self.targetMatrixValid, axis=1)
         maxIndexPrediction = np.argmax(predictionMatrixValid, axis=1)
         #print(self.targetMatrixValid)
@@ -166,7 +175,8 @@ class NN:
         accuracyConfusionMatrix = float(np.trace(confusionMatrix))/(np.sum(confusionMatrix) + zeroOnes)
         #self.valError= 1. - self.accuracy 
         self.valError= 1. - accuracyConfusionMatrix 
-        
+        self.confusionMatrix = confusionMatrix
+        print('self.accuracy', self.accuracy)
             
     def predict(self, x):
         #self.x = x
@@ -174,9 +184,9 @@ class NN:
         self.outputPredicted = self.forwardNonTrain(x)
         
     def hardMax(self, x):
-        self.hardMaxValue = np.copy(x)
-        self.hardMaxValue[np.argmax(self.hardMaxValue)] = 1
-        self.hardMaxValue = np.round(self.hardMaxValue)
+        xMaxIdx = x.argmax()
+        self.hardMaxValue  = np.zeros_like(x)
+        self.hardMaxValue[xMaxIdx] = 1
 
     def run(self):
         if self.test:

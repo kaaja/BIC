@@ -76,23 +76,28 @@ test_targets = target[3::4] #me every 4th row, start row3
 
 import m2
 from m2 import *
-numberOfHiddenNodes=10
+numberOfHiddenNodes=9
 activationFunction= 'sigmoid'#'linear'
-tstRun3 = NN(test, test_targets, 
-                 valid , valid_targets , numberOfHiddenNodes=numberOfHiddenNodes, test=False , \
-                 activationFunction = activationFunction)
+tstRun3 = NN(inputMatrixTrain = train, 
+             targetMatrixTrain = train_targets, 
+             inputMatrixValid = valid, 
+             targetMatrixValid = valid_targets, 
+             numberOfHiddenNodes = numberOfHiddenNodes, 
+             test = False, 
+             activationFunction = activationFunction)
 trainingCyclesPerValidation = 15
 maxValidations= 300 
+maxLocalOptima = 15
 
-tstRun3.solAlg1( trainingCyclesPerValidation=trainingCyclesPerValidation, \
-                maxValidations=maxValidations)
+tstRun3.solAlg1( trainingCyclesPerValidation = trainingCyclesPerValidation, \
+                 maxValidations = maxValidations, maxLocalOptima =maxLocalOptima)
 print('tstRun3.validationErrors', tstRun3.validationErrors)
 
 print('tstRun3.totalNumberOfIterations ', tstRun3.totalNumberOfIterations )
-tstRun3.predict(train[40,:])
+tstRun3.predict(test[40,:])
 #print('predict: ', tstRun3.zOutput)
 print('predict: ', tstRun3.outputPredicted)
-print('target: ', train_targets[40,:])
+print('target: ', test_targets[40,:])
 
 
 '''
