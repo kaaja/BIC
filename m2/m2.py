@@ -56,6 +56,9 @@ class NN:
         if activationFunction == 'linear':
             self.activationFunction = self.activationFunctionLinear
             self.derivative = self.derivativeLinear
+        elif activationFunction == 'sigmoid':
+            self.activationFunction = self.sigmoid
+            self.derivative = self.derivativeSigmoid
         
 
     def activationFunctionLinear(self, x):
@@ -64,7 +67,15 @@ class NN:
     def derivativeLinear(self, x):
         return 1
     
-    def solAlg1(self, trainingCyclesPerValidation=100):
+    def sigmoid(self, x):
+        return 1./(1.+np.exp(-x))
+                
+    def derivativeSigmoid(self, x):
+        return self.sigmoid(x)*(1. - self.sigmoid(x))
+    
+    def solAlg1(self, 
+                trainingCyclesPerValidation=100, 
+                maxIterationsEarlyStopping= 5000):
         """
         Fixed validation set.
         Weight change for every input.
@@ -73,6 +84,7 @@ class NN:
         self.validationErrors = []
         valErrorNew = 5e10
         valErrorOld = valErrorNew + 1.
+        localOptimas = 0
         while valErrorNew < valErrorOld:
             for trainingCycle in range(trainingCyclesPerValidation):
                 #print('trainingCycle ', trainingCycle )
@@ -101,21 +113,59 @@ class NN:
                 
     def calculateValidationError(self):
         self.valError = 0
+        predictionMatrixValid = np.zeros_like(self.targetMatrixValid)
+        
+        confusionMatrix = np.zeros((len(self.targetVector), \
+                                    len(self.targetVector)))
+
         for idx in range(np.shape(self.inputMatrixValid)[0]):
-            self.x = self.inputMatrixValid[idx, :]
-            self.targetVector = self.targetMatrixValid[idx, :]
-            self.forward()
-            self.hardMax(self.zOutput)
-            for outputComponent in range(len(self.targetVector)):
-                print('self.hardMaxValue', self.hardMaxValue)
-                print('self.zOutput',self.zOutput)
+            #self.x = self.inputMatrixValid[idx, :]
+            x = self.inputMatrixValid[idx, :]
+            #print('x', x)
+            #self.targetVector = self.targetMatrixValid[idx, :]
+            targetVector = self.targetMatrixValid[idx, :]
+            #self.forward()
+            prediction = self.forwardNonTrain(x)
+            #print('prediction', prediction)
+            #self.hardMax(self.zOutput)
+            self.hardMax(prediction)
+            predictionMatrixValid[idx,:] = self.hardMaxValue
+            #print('predictionMatrixValid[idx,:]', predictionMatrixValid[idx,:])
+            
+            confusionMatrix[np.argmax(targetVector), \
+                            np.argmax(self.hardMaxValue)] +=1
+            
+            
+            '''
+            #for outputComponent in range(len(self.targetVector)):
+            for outputComponent in range(len(targetVector)):
+                #print('self.zOutput',self.zOutput)
+                #self.valError += (self.hardMaxValue[outputComponent] - \
+                 #            self.targetVector[outputComponent])**2
                 self.valError += (self.hardMaxValue[outputComponent] - \
-                             self.targetVector[outputComponent])**2
-                                  
+                             targetVector[outputComponent])**2
+            '''
+        maxIndexValid = np.argmax(self.targetMatrixValid, axis=1)
+        maxIndexPrediction = np.argmax(predictionMatrixValid, axis=1)
+        #print(self.targetMatrixValid)
+        #print('maxIndexValid', maxIndexValid)
+        #print(predictionMatrixValid)
+        #print('maxIndexPrediction', maxIndexPrediction)
+        accuracy = np.sum(maxIndexValid == maxIndexPrediction)/len(maxIndexValid)
+        self.valError= 1. - accuracy 
+        
+        accuracyConfusionMatrix = float(np.trace(confusionMatrix)/np.sum(confusionMatrix))
+        #print('accuracyConfusionMatrix/accuracy', accuracyConfusionMatrix/accuracy)
+        #print('confusionMatrix \n' , confusionMatrix)
+        #print('accuracyConfusionMatrix ', accuracyConfusionMatrix )
+        #print('accuracy',accuracy)
+        #print(self.valError)
+        
+            
     def predict(self, x):
-        self.x = x
-        self.forward()
-        #print('Predict: ', self.zOutput)
+        #self.x = x
+        #self.forward()
+        self.outputPredicted = self.forwardNonTrain(x)
         
     def hardMax(self, x):
         self.hardMaxValue = np.copy(x)
@@ -139,6 +189,7 @@ class NN:
     
     
     def forward(self):
+        #Training
         for j in range(1, self.numberOfHiddenNodes+1):
             self.hHidden[j] = 0
             for i in range(len(self.x)):
@@ -150,6 +201,24 @@ class NN:
             for j in range(len(self.hHidden)):
                 self.hOutput[k] += self.wOutput[j,k]*self.zHidden[j]
             self.zOutput[k] = self.activationFunction(self.hOutput[k])
+            
+    def forwardNonTrain(self, x):
+        hHidden = np.zeros_like(self.hHidden)
+        zHidden = np.zeros_like(self.zHidden)
+        for j in range(1, self.numberOfHiddenNodes+1):
+            hHidden[j] = 0
+            for i in range(len(x)):
+                hHidden[j] += self.wHidden[i,j-1]*x[i]
+            zHidden[j] = self.activationFunction(hHidden[j])
+        
+        hOutput = np.zeros_like(self.hOutput)
+        zOutput = np.zeros_like(self.zOutput)
+        for k in range(len(hOutput)):
+            hOutput[k] = 0
+            for j in range(len(hHidden)):
+                hOutput[k] += self.wOutput[j,k]*zHidden[j]
+            zOutput[k] = self.activationFunction(hOutput[k])
+        return zOutput
                 
     def calculateError(self):
         self.error2 = 0

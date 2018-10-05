@@ -64,7 +64,7 @@ train_targets = target[::2] #Me every 2nd row, start from row0
 
 # Validation checks how well the network is performing and when to stop
 valid = movements[1::4,0:40]
-valid = target[1::4] #me every 4th row, start row1
+valid_targets = target[1::4] #me every 4th row, start row1
 
 # Test data is used to evaluate how good the completely trained network is.
 test = movements[3::4,0:40]
@@ -74,16 +74,19 @@ test_targets = target[3::4] #me every 4th row, start row3
 
 import m2
 from m2 import *
-numberOfHiddenNodes=12
+numberOfHiddenNodes=10
+activationFunction= 'sigmoid'#'linear'
 tstRun3 = NN(test, test_targets, 
-                 valid , valid , numberOfHiddenNodes=numberOfHiddenNodes, test=False )
-trainingCyclesPerValidation = 3
+                 valid , valid_targets , numberOfHiddenNodes=numberOfHiddenNodes, test=False , \
+                 activationFunction = activationFunction)
+trainingCyclesPerValidation = 5
+maxIterationsEarlyStopping = 5000
 
 tstRun3.solAlg1( trainingCyclesPerValidation=trainingCyclesPerValidation)
 print('tstRun3.validationErrors', tstRun3.validationErrors)
 tstRun3.predict(train[40,:])
-print('predict: ', tstRun3.zOutput)
-
+#print('predict: ', tstRun3.zOutput)
+print('predict: ', tstRun3.outputPredicted)
 print('target: ', train_targets[40,:])
 
 
