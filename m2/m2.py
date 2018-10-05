@@ -37,16 +37,18 @@ class NN:
         self.numberOfHiddenNodes =  numberOfHiddenNodes
         self.maxIterations = maxIterations
         self.method = method
-        self.test = test\
+        self.test = test
+        self.activationFunction = activationFunction
          
         
-        self.inputMatrixTrainWithBias = np.c_[np.ones(np.shape(inputMatrixTrain)[0]), \
-                                    inputMatrixTrain]         
+    def createWeightsAndLayers(self):
+        self.inputMatrixTrainWithBias = np.c_[np.ones(np.shape(self.inputMatrixTrain)[0]), \
+                                    self.inputMatrixTrain]         
         
         
-        self.hHidden = np.zeros(numberOfHiddenNodes+1)
+        self.hHidden = np.zeros(self.numberOfHiddenNodes+1)
         self.hHidden[0] = 1
-        self.hOutput = np.zeros(np.shape(targetMatrixTrain)[1])
+        self.hOutput = np.zeros(np.shape(self.targetMatrixTrain)[1])
         
         self.zHidden = np.zeros_like(self.hHidden)
         self.zHidden[0] = 1
@@ -56,7 +58,7 @@ class NN:
         self.deltaHidden = np.zeros_like(self.zHidden)
         
         
-        if test:
+        if self.test:
             self.wHidden = np.array(((1., 1), (-1., 0), (0, 1)))
             self.wOutput  = np.array(((1., 1.), (1., -1.), (0., 1.))) 
          
@@ -66,10 +68,10 @@ class NN:
             self.wOutput = np.random.random_sample((self.numberOfHiddenNodes+1,\
                                             np.shape(self.targetMatrixTrain)[1])) - .5
             
-        if activationFunction == 'linear':
+        if self.activationFunction == 'linear':
             self.activationFunction = self.activationFunctionLinear
             self.derivative = self.derivativeLinear
-        elif activationFunction == 'sigmoid':
+        elif self.activationFunction == 'sigmoid':
             self.activationFunction = self.sigmoid
             self.derivative = self.derivativeSigmoid
         
@@ -87,19 +89,16 @@ class NN:
         return self.sigmoid(x)*(1. - self.sigmoid(x))
     
     def kFold(self, numberOfFolds = 3):
-
         allData = np.concatenate([self.inputMatrixTrain, self.inputMatrixValid],\
-                                 axis=1)
+                                 axis=0)
         allTargets = np.concatenate([self.targetMatrixTrain, self.targetMatrixValid],\
-                                 axis=1)
+                                 axis=0)
         
-        print('allData\n', allData)
-        #print('allTargets\n', allTargets)
         foldLength = int(round(np.shape(allData)[0]/numberOfFolds))
          
         indices = np.arange(np.shape(allData)[0])
         
-        minimumValErrors = []
+        bestScores = []
         for iteration in range(numberOfFolds):
             if iteration != range(numberOfFolds)[-1]:
                 validationIndices = indices[iteration*foldLength:(iteration+1)*foldLength]
@@ -108,41 +107,29 @@ class NN:
                 
             trainintIndices = np.setdiff1d(np.union1d(indices, validationIndices ),\
                                            np.intersect1d(indices, validationIndices))
-            #print('testIndices',testIndices)
-            #print('tr)ainIndcies', trainintIndices)
             
             self.inputMatrixTrain = allData[trainintIndices,:]
-            print('self.inputMatrixTrain \n',self.inputMatrixTrain)
-            
-            self.inputMatrixTrainWithBias = np.c_[np.ones(np.shape(self.inputMatrixTrain)[0]), \
-                                    self.inputMatrixTrain]
-            print('self.inputMatrixTrainWithBias \n',self.inputMatrixTrainWithBias)
-            
             self.inputMatrixValid = allData[validationIndices, :]
-            #print('self.inputMatrixValid \n',self.inputMatrixValid)
             self.targetMatrixTrain = allTargets[trainintIndices, :]
-            #print('self.targetMatrixTrain \n',self.targetMatrixTrain)
-              
-            
-            
             self.targetMatrixValid = allTargets[validationIndices, :]
-            print('self.targetMatrixValid \n',self.targetMatrixValid)
-
+            
+            self.createWeightsAndLayers()
 
             trainingCyclesPerValidation = 5
             maxValidations = 1000
             maxLocalOptima = 15
-
 
             self.solAlg1(
                     trainingCyclesPerValidation = trainingCyclesPerValidation,
                     maxValidations = maxValidations,
                     maxLocalOptima = maxLocalOptima)
             
-            minimumValErrors.append(np.min(self.validationErrors))
-        print('minimumValErrors', minimumValErrors)
-        print('np.mean(minimumValErrors), np.std(minimumValErrors)', 
-              np.mean(minimumValErrors), np.std(minimumValErrors))
+            bestScores.append(1 - np.min(self.validationErrors))
+        print('Best accuracy: ', bestScores)
+        print('Mean(bestScores): %.2f, std(bestScores) %.2f' 
+              %(np.mean(bestScores), np.std(bestScores)))
+        
+        
     
     def solAlg1(self, 
                 trainingCyclesPerValidation=5, 
@@ -160,7 +147,7 @@ class NN:
         validationIdx = 0
         
         indices = list(range(np.shape(self.inputMatrixTrainWithBias)[0]))
-
+        confusionMatrices = []
         
         while localOptima < maxLocalOptima and validationIdx < maxValidations:
             for trainingCycle in range(trainingCyclesPerValidation):
@@ -184,13 +171,15 @@ class NN:
             else:
                 valErrorOld  = self.valError 
                 self.validationErrors.append(valErrorOld)
-                bestConfusionMatrix = self.confusionMatrix
+                confusionMatrices.append(self.confusionMatrix)
             
             validationIdx += 1
+        indexBestAccuracy = np.argmin(self.validationErrors)
         self.totalNumberOfIterations = (validationIdx+1)*trainingCyclesPerValidation
-        print('bestConfusionMatrix \n', bestConfusionMatrix)
-            #print(valErrorNew)
-        #print(self.validationErrors)
+        print('\n Best Confusion Matrix \n', confusionMatrices[indexBestAccuracy])
+        print('Best accuracy: %.2f' % (1-np.min(self.validationErrors)))
+        print('TotalNumberOfIterations', self.totalNumberOfIterations)
+
             
                 
     def calculateValidationError(self):
@@ -266,9 +255,12 @@ class NN:
     
     def forward(self):
         #Training
+        #print('self.hHidden', self.hHidden, 'self.wHidden', self.wHidden, 'self.x', self.x)
         for j in range(1, self.numberOfHiddenNodes+1):
+            #print('j', j)
             self.hHidden[j] = 0
             for i in range(len(self.x)):
+                #print('i',i)
                 self.hHidden[j] += self.wHidden[i,j-1]*self.x[i]
             self.zHidden[j] = self.activationFunction(self.hHidden[j])
             
@@ -328,6 +320,7 @@ def test_run():
     targetMatrixTrain = np.array(((1,0), (1,0)))
     correct = np.array(((1,0,1), (1,0,1)))
     tstRun = NN(inputMatrixTrain, targetMatrixTrain )
+    tstRun.createWeightsAndLayers()
     tstRun.run()
     
     tolerance = 1e-7
@@ -340,7 +333,8 @@ def test_init():
     inputMatrixTrain = np.array(((0,1), (0,1)))
     targetMatrixTrain = np.array(((1,0), (1,0)))
     tstRun = NN(inputMatrixTrain, targetMatrixTrain )
-
+    tstRun.createWeightsAndLayers()
+    
     # Input with bias
     correctMatrix = np.array(((1,0,1), (1,0,1)))
     tolerance = 1e-7
@@ -392,7 +386,9 @@ def test_forward():
     targetMatrixTrain = np.array(((1,0), (1,0)))
     
     tstRun = NN(inputMatrixTrain, targetMatrixTrain, test=True )
+    tstRun.createWeightsAndLayers()
     tstRun.run()
+    
     
     # hHidden
     hHiddenCorrect = np.array((1,1,2))
@@ -435,7 +431,9 @@ def test_calculateError():
     targetMatrixTrain = np.array(((1,0), (1,0)))
     
     tstRun = NN(inputMatrixTrain, targetMatrixTrain, test=True )
+    tstRun.createWeightsAndLayers()
     tstRun.run()
+    
 
     correct = (1.-2)**2 + (0.-2.)**2
     tolerance = 1e-7
@@ -450,7 +448,9 @@ def test_backward():
     targetMatrixTrain = np.array(((1,0), (1,0)))
     
     tstRun2 = NN(inputMatrixTrain, targetMatrixTrain, test=True )
+    tstRun2.createWeightsAndLayers()
     tstRun2.run()
+    
 
     # deltaOutput
     correct = np.array((1, 2))
@@ -493,6 +493,7 @@ def test_convergence():
     targetMatrixTrain = np.array(((1,0), (1,0)))
     
     tstRun3 = NN(inputMatrixTrain, targetMatrixTrain, test=True )
+    tstRun3.createWeightsAndLayers()
     tstRun3.x = tstRun3.inputMatrixTrainWithBias[0, :]
     tstRun3.targetVector = tstRun3.targetMatrixTrain[0, :]
 
@@ -518,6 +519,7 @@ def test_solAlg1():
     
     tstRun3 = NN(inputMatrixTrain, targetMatrixTrain, 
                  inputMatrixValid , targetMatrixValid , test=True )
+    tstRun3.createWeightsAndLayers()
     tstRun3.solAlg1()
     
     # Early stopping
@@ -543,14 +545,15 @@ def test_solAlg1():
 def test_kFold():
     inputMatrixTrain = np.array(((0,1, 2, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4)))
     targetMatrixTrain = np.array(((1,0, 22, 3, 4), (0,1, 4, 4, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4), (1,0, 1, 3, 4)))
-    inputMatrixValid = np.array(((1,1), (0, 0), (0, 0), (0, 0), (0, 0), (0, 0)))
-    targetMatrixValid = np.array(((0, 0), (1,1), (0, 0), (0, 0), (0, 0), (0, 0)))
+    inputMatrixValid = np.array(((1,1,0,0,1), (0, 0,0,0,1), (0, 0,0,0,1), (0, 0,0,0,1), (0, 0,0,0,1), (0, 0,0,0,1)))
+    targetMatrixValid = np.array(((0, 0,0,0,1), (1,1,0,0,1), (0, 0,0,0,1), (0, 0,0,0,1), (0, 0,0,0,1), (0, 0,0,0,1)))
     
     tstRun3 = NN(inputMatrixTrain=inputMatrixTrain, 
                  targetMatrixTrain=targetMatrixTrain, 
                  inputMatrixValid =inputMatrixValid , 
                  targetMatrixValid =targetMatrixValid, 
                  test=True )
+    tstRun3.createWeightsAndLayers()
     tstRun3.kFold()
     
 
@@ -567,7 +570,7 @@ if __name__ == "__main__":
     test_backward()
     test_convergence()
     test_solAlg1()
-    test_kFold()
+    #test_kFold()
 
     
 #%%

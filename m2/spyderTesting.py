@@ -112,7 +112,7 @@ tstRun4 = NN(inputMatrixTrain = train,
              numberOfHiddenNodes = numberOfHiddenNodes, 
              test = False, 
              activationFunction = activationFunction)
-numberOfFolds = 3
+numberOfFolds = 4
 tstRun4.kFold(numberOfFolds = numberOfFolds)
 
 '''
