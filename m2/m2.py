@@ -88,7 +88,13 @@ class NN:
     def derivativeSigmoid(self, x):
         return self.sigmoid(x)*(1. - self.sigmoid(x))
     
-    def kFold(self, numberOfFolds = 3):
+    def kFold(self, 
+              numberOfFolds = 3,
+              trainingCyclesPerValidation = 5,
+              maxValidations = 1000,
+            maxLocalOptima = 15,
+            printConfusionMatrix=False):
+        
         allData = np.concatenate([self.inputMatrixTrain, self.inputMatrixValid],\
                                  axis=0)
         allTargets = np.concatenate([self.targetMatrixTrain, self.targetMatrixValid],\
@@ -115,17 +121,18 @@ class NN:
             
             self.createWeightsAndLayers()
 
-            trainingCyclesPerValidation = 5
-            maxValidations = 1000
-            maxLocalOptima = 15
+            #trainingCyclesPerValidation = 5
+            #maxValidations = 1000
+            #maxLocalOptima = 15
 
             self.solAlg1(
                     trainingCyclesPerValidation = trainingCyclesPerValidation,
                     maxValidations = maxValidations,
-                    maxLocalOptima = maxLocalOptima)
+                    maxLocalOptima = maxLocalOptima,
+                    printConfusionMatrix = printConfusionMatrix)
             
             bestScores.append(1 - np.min(self.validationErrors))
-        print('Best accuracy: ', bestScores)
+        print('\nBest accuracy folds: ', bestScores)
         print('Mean(bestScores): %.2f, std(bestScores) %.2f' 
               %(np.mean(bestScores), np.std(bestScores)))
         
@@ -134,7 +141,8 @@ class NN:
     def solAlg1(self, 
                 trainingCyclesPerValidation=5, 
                 maxValidations= 1000,
-                maxLocalOptima = 15):
+                maxLocalOptima = 15,
+                printConfusionMatrix=True):
         """
         Fixed validation set.
         Weight change for every input.
@@ -176,9 +184,15 @@ class NN:
             validationIdx += 1
         indexBestAccuracy = np.argmin(self.validationErrors)
         self.totalNumberOfIterations = (validationIdx+1)*trainingCyclesPerValidation
-        print('\n Best Confusion Matrix \n', confusionMatrices[indexBestAccuracy])
+        print('\nActivation function: ', self.activationFunction.__name__)
+        print('Hidden nodes: ', self.numberOfHiddenNodes)
+        print('Epochs per validation: ', trainingCyclesPerValidation)
+        if printConfusionMatrix:
+            print('Best Confusion Matrix: \n', \
+                  confusionMatrices[indexBestAccuracy])
         print('Best accuracy: %.2f' % (1-np.min(self.validationErrors)))
-        print('TotalNumberOfIterations', self.totalNumberOfIterations)
+        print('TotalNumberOfIterations: ' , self.totalNumberOfIterations)
+        print('Validations: ', validationIdx+1)
 
             
                 
