@@ -1,17 +1,8 @@
 
 #%%
-#!/usr/bin/env Python3
-'''
-    This file will read in data and start your mlp network.
-    You can leave this file mostly untouched and do your
-    mlp implementation in mlp.py.
-'''
 
-
-# Feel free to use numpy in your MLP if you like to.
 import numpy as np
-#import mlp
-def dataHandling(filename='movements_day1-3.dat'):
+def dataAssignment2(filename='movements_day1-3.dat'):
 	''' Read in all data
 		Last column is the target value
 		Make a matrix of target vectors. 
@@ -21,9 +12,6 @@ def dataHandling(filename='movements_day1-3.dat'):
 		Split data into training, validation, test. 50/25/25
 		Rescaling by subtracting mean and dividing by max
 	'''
-	#filename = 'movements_day1-3.dat'
-	#filename = 'movements_day1-3Test.dat'
-
 
 	movements = np.loadtxt(filename,delimiter='\t')
 
@@ -73,19 +61,20 @@ def dataHandling(filename='movements_day1-3.dat'):
 
 	return train, train_targets, valid, valid_targets, test, test_targets
 
-train, train_targets, valid, valid_targets, test, test_targets = dataHandling()
+#train, train_targets, valid, valid_targets, test, test_targets = dataAssignment2()
 
 
 
-import m2
-from m2 import *
+#import m2
+from nnClass import *
 
-def fixedValidationSet(train = train,
-                       train_targets = train_targets,
-                       valid = valid,
-                       valid_targest = valid_targets,
-                       numberOfHiddenNodes=9, activationFunction= 'sigmoid', 
-					   trainingCyclesPerValidation = 15, 
+def fixedValidationSet(train ,
+                       train_targets ,
+                       valid ,
+                       valid_targets ,
+                       numberOfHiddenNodes=9, 
+					   activationFunction= 'sigmoid', 
+					   trainingCyclesPerValidation = 5, 
 					   maxValidations= 300,
 					   maxLocalOptima = 15):
 
@@ -104,25 +93,16 @@ def fixedValidationSet(train = train,
 #fixedValidationSet()
 
 
-'''
-print('tstRun3.validationErrors', tstRun3.validationErrors)
-
-print('tstRun3.totalNumberOfIterations ', tstRun3.totalNumberOfIterations )
-tstRun3.predict(test[40,:])
-#print('predict: ', tstRun3.zOutput)
-print('predict: ', tstRun3.outputPredicted)
-print('target: ', test_targets[40,:])
-'''
 
 # K-fold
-def runKfold(	train = train,
-          	train_targets = train_targets,
-          	valid = valid,
-          	valid_targest = valid_targets,
+def runKfold(	train ,
+          	train_targets,
+          	valid ,
+          	valid_targets ,
 			numberOfHiddenNodes=9,
 			activationFunction= 'sigmoid',
 			numberOfFolds = 3, 
-			trainingCyclesPerValidation=5,
+			trainingCyclesPerValidation=1,
 			maxValidations = 1000,
 			maxLocalOptima = 15,
 			printConfusionMatrix=False):
@@ -143,22 +123,4 @@ def runKfold(	train = train,
 						maxLocalOptima=maxLocalOptima,
 						printConfusionMatrix=printConfusionMatrix)
 
-runKfold()
-
-'''
-# Try networks with different number of hidden nodes:
-hidden = 12
-
-
-# Initialize the network:
-net = mlp.mlp(train, train_targets, hidden)
-
-# Run training:
-net.earlystopping(train, train_targets, valid, valid_targets)
-# NOTE: You can also call train method from here,
-#       and make train use earlystopping method.
-#       This is a matter of preference.
-
-# Check how well the network performed:
-net.confusion(test,test_targets)
-'''
+#runKfold()

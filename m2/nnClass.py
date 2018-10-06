@@ -90,7 +90,7 @@ class NN:
     
     def kFold(self, 
               numberOfFolds = 3,
-              trainingCyclesPerValidation = 5,
+              trainingCyclesPerValidation = 15,
               maxValidations = 1000,
             maxLocalOptima = 15,
             printConfusionMatrix=False):
@@ -121,9 +121,7 @@ class NN:
             
             self.createWeightsAndLayers()
 
-            #trainingCyclesPerValidation = 5
-            #maxValidations = 1000
-            #maxLocalOptima = 15
+
 
             self.solAlg1(
                     trainingCyclesPerValidation = trainingCyclesPerValidation,
@@ -184,15 +182,16 @@ class NN:
             validationIdx += 1
         indexBestAccuracy = np.argmin(self.validationErrors)
         self.totalNumberOfIterations = (validationIdx+1)*trainingCyclesPerValidation
-        print('\nActivation function: ', self.activationFunction.__name__)
-        print('Hidden nodes: ', self.numberOfHiddenNodes)
-        print('Epochs per validation: ', trainingCyclesPerValidation)
         if printConfusionMatrix:
+            print('\nHidden nodes: ', self.numberOfHiddenNodes)
+            print('Activation function: ', self.activationFunction.__name__)
+            print('Hidden nodes: ', self.numberOfHiddenNodes)
+            print('Epochs per validation: ', trainingCyclesPerValidation)
             print('Best Confusion Matrix: \n', \
                   confusionMatrices[indexBestAccuracy])
-        print('Best accuracy: %.2f' % (1-np.min(self.validationErrors)))
-        print('TotalNumberOfIterations: ' , self.totalNumberOfIterations)
-        print('Validations: ', validationIdx+1)
+            print('Best accuracy: %.2f' % (1-np.min(self.validationErrors)))
+            print('TotalNumberOfIterations: ' , self.totalNumberOfIterations)
+            print('Validations: ', validationIdx+1)
 
             
                 
