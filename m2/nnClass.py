@@ -39,6 +39,10 @@ class NN:
         self.method = method
         self.test = test
         self.activationFunction = activationFunction
+        
+        if isinstance(inputMatrixTest, np.ndarray):
+            self.targetMatrixTest = targetMatrixTest
+            self.inputMatrixTest = inputMatrixTest
          
         
     def createWeightsAndLayers(self):
@@ -121,8 +125,6 @@ class NN:
             
             self.createWeightsAndLayers()
 
-
-
             self.solAlg1(
                     trainingCyclesPerValidation = trainingCyclesPerValidation,
                     maxValidations = maxValidations,
@@ -144,7 +146,7 @@ class NN:
         """
         Fixed validation set.
         Weight change for every input.
-        Random order of inputs"""
+        Randomization of input order after each epoch."""
         
         self.validationErrors = []
         valErrorNew = 5e10
@@ -178,6 +180,14 @@ class NN:
                 valErrorOld  = self.valError 
                 self.validationErrors.append(valErrorOld)
                 confusionMatrices.append(self.confusionMatrix)
+                # Storing best model
+                #self.hHiddenBest = self.hHidden
+                #self.hOutputBest = self.hOutput
+                self.wHiddenBest = self.wHidden
+                self.wOutputBest = self.wOutput
+                #self.zHiddenBest = self.zHidden
+                #self.zOutputBest = self.zOutput
+
             
             validationIdx += 1
         indexBestAccuracy = np.argmin(self.validationErrors)
@@ -195,7 +205,7 @@ class NN:
 
             
                 
-    def calculateValidationError(self):
+    def calculateValidationError(self, printTestResults=False):
         self.valError = 0
         predictionMatrixValid = np.zeros_like(self.targetMatrixValid)
         
@@ -239,6 +249,10 @@ class NN:
         self.valError= 1. - accuracyConfusionMatrix 
         self.confusionMatrix = confusionMatrix
         #print('self.accuracy', self.accuracy)
+        if printTestResults:
+            print('\nTest Confusion Matrix: \n', \
+                  self.confusionMatrix)
+            print('Best accuracy: %.2f' % (self.accuracy))
             
     def predict(self, x):
         #self.x = x

@@ -124,3 +124,41 @@ def runKfold(	train ,
 						printConfusionMatrix=printConfusionMatrix)
 
 #runKfold()
+
+# Test set performance
+def runTestSet(	train ,
+          	train_targets,
+          	valid ,
+          	valid_targets ,
+            test,
+            test_targets,
+			numberOfHiddenNodes=9,
+			activationFunction= 'sigmoid',
+			numberOfFolds = 3, 
+			trainingCyclesPerValidation=1,
+			maxValidations = 1000,
+			maxLocalOptima = 15,
+			printConfusionMatrix=False, 
+            printTestResults=True):
+
+    tstRun3 = NN(inputMatrixTrain = train, 
+		     targetMatrixTrain = train_targets, 
+		     inputMatrixValid = valid, 
+		     targetMatrixValid = valid_targets, 
+             inputMatrixTest = test,
+		     targetMatrixTest = test_targets,              
+		     numberOfHiddenNodes = numberOfHiddenNodes, 
+		     test = False, 
+		     activationFunction = activationFunction)
+
+    tstRun3.createWeightsAndLayers()
+    tstRun3.solAlg1( trainingCyclesPerValidation = trainingCyclesPerValidation, \
+		         maxValidations = maxValidations, maxLocalOptima =maxLocalOptima)
+    tstRun3.wHidden = tstRun3.wHiddenBest
+    tstRun3.wOutput = tstRun3.wOutputBest
+    tstRun3.targetMatrixValid = tstRun3.targetMatrixTest
+    tstRun3.inputMatrixValid = tstRun3.inputMatrixTest
+    tstRun3.targetVector = tstRun3.targetMatrixTest[0, :]
+    tstRun3.calculateValidationError(printTestResults=printTestResults)
+    #print(tstRun3.confusionMatrix)
+	
