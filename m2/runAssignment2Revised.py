@@ -1,3 +1,4 @@
+
 #%%
 
 import numpy as np
@@ -98,6 +99,8 @@ def runKfold(	train ,
           	train_targets,
           	valid ,
           	valid_targets ,
+            test,
+            test_targets,
 			numberOfHiddenNodes=9,
 			activationFunction= 'sigmoid',
 			numberOfFolds = 3, 
@@ -112,6 +115,8 @@ def runKfold(	train ,
 		         targetMatrixTrain = train_targets, 
 		         inputMatrixValid = valid, 
 		         targetMatrixValid = valid_targets, 
+                 inputMatrixTest = test, 
+                 targetMatrixTest = test_targets
 		         numberOfHiddenNodes = numberOfHiddenNodes, 
 		         test = False, 
 		         activationFunction = activationFunction)
@@ -160,3 +165,4 @@ def runTestSet(	train ,
     tstRun3.targetVector = tstRun3.targetMatrixTest[0, :]
     tstRun3.calculateValidationError(printTestResults=printTestResults)
     #print(tstRun3.confusionMatrix)
+	
